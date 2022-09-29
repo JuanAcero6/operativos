@@ -1,0 +1,164 @@
+{% load static %}
+{% load widget_tweaks %}
+{% block contenido %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- CSS only -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+  <style type="text/css">
+  </style>
+  <title>Operativos</title>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0/jquery.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+  <!-- jQuery Modal -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+      <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+        <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"></use></svg>
+        <span class="fs-4">Simulacion procesos</span>
+      </a>
+
+      <ul class="nav nav-pills">
+        <li class="nav-item"><a href="{% url "home" %}" class="nav-link active" aria-current="page">Inicio</a></li>
+        <li class="nav-item"><a href="{% url "simulacion" %}" class="nav-link">Simulacion</a></li>
+      </ul>
+    </header>
+    <div class="container my-5">      
+      <div class="row p-4 pb-5 pe-lg-0 pt-lg-6 align-items-center rounded-3 border shadow-lg">
+        <h1 class="display-4 fw-bold lh-1">Bienvenido</h1>
+        <p class="lead">La siguiente simulacion consiste en recrear el momento
+          en que una memoria realiza procesos y como estos se ven involucrados:</p>
+        <h6>Ingrese el tamaño de la memoria:</h6>
+        <div class="col-lg-6 p-3 p-lg-5 pt-lg-3">          
+          <div class="d-grid gap-3 d-md-flex justify-content-md-start mb-4 mb-lg-3">
+            {% if memoria_valid%}
+              {% for memoria in memorias%}
+                <label>Tamaño de la memoria designado: {{memoria.tamaño}} Kb</label>
+                <div class=" px-4 me-md-2"></div>
+                <button type="button" class="btn btn-danger btn-xs px-4 me-md-2 fw-bold" id="btn_eliminar_memoria">Eliminar tamaño</button>
+              {% endfor %}
+            {% else %}
+              <input type="number" id="valor_memoria" >
+              <p class="lead"> Kb</p>
+              <div class=" px-4 me-md-2"></div>
+              <button type="button" class="btn btn-primary btn-xs px-4 me-md-2 fw-bold" id="btn_guardar_memoria">Guardar tamaño</button>
+            {% endif %}            
+          </div>
+        </div>
+        <div class="col-lg-5 shadow-lg rounded">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Id</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Tiempo</th>
+                <th scope="col">Tamaño</th>
+                <th scope="col">Estado</th>
+                <th scope="col"> <button class="btn btn-outline-success rounded-circle" id="añadir_proceso">+</button></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for proceso in procesos%}
+                <tr>
+                  <th scope="row">{{proceso.pk}}</th>
+                  <th>{{proceso.nombre}}</th>
+                  <th>{{proceso.tiempo}}</th>
+                  <th>{{proceso.tamaño}}</th>
+                  <th>{{proceso.get_estado_display}}</th>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="b-example-divider"></div>
+  </div>
+  <div class="modal position-static py-1 px-3" tabindex="-1" role="dialog" id="modal_añadir_proceso">
+    <div class="modal-header p-5 pb-4 border-bottom-0">
+      <h2 class="fw-bold mb-0">Añadir proceso</h2>
+    </div>
+
+    <div class="modal-body p-5 pt-0">
+      <form action="" method="POST">
+        {% csrf_token %}
+        <div class="form-floating mb-3">
+          {{formulario.nombre|add_class:"form-control rounded-3"}}
+          {{formulario.nombre.label_tag}}
+        </div>
+        <div class="form-floating mb-3">
+          {{formulario.tiempo|add_class:"form-control rounded-3"}}
+          <label>Tiempo (en segundos):</label>
+        </div>
+        <div class="form-floating mb-3">
+          {{formulario.tamaño|add_class:"form-control rounded-3"}}
+          <label>Tamaño (en Kilobyte):</label>
+        </div>
+        <div class="form-floating mb-3">
+          {{formulario.prioridad|add_class:"form-control rounded-3"}}
+          {{formulario.prioridad.label_tag}}
+        </div>
+        <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit">Guardar</button>
+        <hr class="my-4">
+        </button>
+      </form>
+    </div>
+  </div>
+</body>
+<script type="text/javascript">
+  $("#añadir_proceso").on('click', function(event) {
+      event.preventDefault();
+      $("#modal_añadir_proceso").modal("show");
+  });
+
+  $("#btn_guardar_memoria").on('click', function(event) {
+    event.preventDefault();
+    let valor = $("#valor_memoria").val(); 
+    let boton = $("#valor_memoria");
+    boton.attr('disabled', 'disabled');
+    $.ajax({
+            type: 'POST',
+            url: '{% url "home" %}',
+            data: {
+                'tamaño_memoria':valor,
+                'csrfmiddlewaretoken': '{{ csrf_token }}',
+            },
+            success: function(respuesta){
+                location.reload();
+            }, error: function(XMLHttpRequest, textStatus, errorThrown) {
+                alert('No se pudo guardar el tamaño de la memoria')
+            }
+        });
+  });
+
+  $("#btn_eliminar_memoria").on('click', function(event) {
+    event.preventDefault();
+    $.ajax({
+            type: 'POST',
+            url: '{% url "home" %}',
+            data: {
+                'eliminar':" ",
+                'csrfmiddlewaretoken': '{{ csrf_token }}',
+            },
+            success: function(respuesta){
+                location.reload();
+            }, error: function(XMLHttpRequest, textStatus, errorThrown) {
+                alert('No se pudo eliminar el tamaño de la memoria')
+            }
+        });
+  });
+  
+</script>
+</html>
+
+{% endblock %}
